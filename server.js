@@ -1,36 +1,53 @@
 const http = require("http");
-const { readFileSync } = require("fs");
+const { readFile } = require("fs");
+const path = require("path");
 const lookup = require("mime-types").lookup;
 
-const home = readFileSync("./index.html");
-const style = readFileSync("./style.css");
-const pic = readFileSync("./cactus_img.jpg");
+// Read files into an object
+const files = {
+  "/": "./index.html",
+  "/product": "./product.html",
+  "/productStyle": "./static/productStyle.css",
+  "/style": "./static/style.css",
+  "/productLogic": "./static/productLogic",
+  "/cactus_img": "./cactus_img.jpeg",
+};
 
+// Function to read a file based on the filename
+function serveFile(filePath, res) {
+  const contentType = lookup(filePath) || "application/octet-stream";
+
+  readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(404, { "Content-Type": "text/html" });
+      res.write("<h1>File Not Found</h1>");
+      res.end();
+    } else {
+      res.writeHead(200, { "Content-Type": contentType });
+      res.write(data);
+      res.end();
+    }
+  });
+}
+
+// Create the server
 const server = http.createServer((req, res) => {
   const url = req.url;
   console.log(url);
 
-  if (url === "/") {
-    res.writeHead(200, { "content-type": "text/html" });
-    res.write(home);
-    res.end();
-  } else if (url === "/style.css") {
-    const contentType = lookup("style.css") || "text/css";
-    res.writeHead(200, { "content-type": contentType });
-    res.write(style);
-    res.end();
-  } else if (url === "/cactus_img.jpg") {
-    const contentType = lookup("cactus_img.jpg") || "image/jpeg";
-    res.writeHead(200, { "content-type": contentType });
-    res.write(pic);
-    res.end();
+  if (files[url]) {
+    serveFile(files[url], res);
+  } else if (url.startsWith("/static/")) {
+    const filePath = path.join(__dirname, url);
+    serveFile(filePath, res);
   } else {
-    res.writeHead(404, { "content-type": "text/html" });
+    res.writeHead(404, { "Content-Type": "text/html" });
     res.write("<h1>Page Not Found</h1>");
     res.end();
   }
 });
 
+// Start the server
 server.listen(3000, () => {
   console.log("Server is running on http://localhost:3000");
 });
