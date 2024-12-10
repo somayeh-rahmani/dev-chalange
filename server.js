@@ -15,7 +15,7 @@ const files = {
 
 // Function to read a file based on the filename
 function serveFile(filePath, res) {
-  const contentType = lookup(filePath) || "application/octet-stream";
+  const contentType = lookup(filePath);
 
   readFile(filePath, (err, data) => {
     if (err) {
